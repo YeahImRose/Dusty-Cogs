@@ -20,6 +20,13 @@ class Autorole:
 
     async def _give_role(self, member):
         server = member.server
+        
+        if server.id not in self.settings:
+            self.settings[server.id] = {}
+            self.settings[server.id]["ENABLED"] = False
+            self.settings[server.id]["ROLE"] = None
+            fileIO("data/autorole/settings.json", "save", self.settings)
+            
         if self.settings[server.id]["ENABLED"] is True:
             roleid = self.settings[server.id]["ROLE"]
             try:
@@ -34,7 +41,6 @@ class Autorole:
             role = discord.utils.get(roles, id=roleid)
             try:
                 await self.bot.add_roles(member, role)
-
 
             except discord.Forbidden:
                 print("An error has occured. User that joined: {0.name}".format(member))
