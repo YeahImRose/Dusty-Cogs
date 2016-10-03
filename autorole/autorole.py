@@ -49,7 +49,7 @@ class Autorole:
 
     @commands.group(name="autorole", pass_context=True, no_pm=True)
     async def autorole(self, ctx):
-        """ Change settings for autorole
+        """Change settings for autorole
 
         Requires the manage roles permission"""
         server = ctx.message.server
@@ -66,7 +66,7 @@ class Autorole:
     @autorole.command(pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_roles=True)
     async def toggle(self, ctx):
-        """ Enables/Disables autorole"""
+        """Enables/Disables autorole"""
         server = ctx.message.server
         if self.settings[server.id]["ROLE"] is None:
             await self.bot.say("You haven't set a role to assign to new users! Use `" + ctx.prefix + "autorole role \"role\"` to set it!")
@@ -83,7 +83,9 @@ class Autorole:
     @autorole.command(pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_roles=True)
     async def role(self, ctx, role: discord.Role):
-        """ Set role for autorole to assign """
+        """Set role for autorole to assign. 
+        
+        Use quotation marks around the role if it contains spaces."""
         server = ctx.message.server
         self.settings[server.id]["ROLE"] = role.id
         await self.bot.say("Autorole set to " + role.name)
