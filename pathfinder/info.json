@@ -1,7 +1,7 @@
 {
 	"AUTHOR" : "Lunar Dust",
 	"INSTALL_MSG" : "Thank you for downloading one of my cogs! If you have any issues please let me know!",
-	"NAME" : "DnD",
+	"NAME" : "pathfinder",
 	"SHORT" : "Various features related to DnD/Pathfinder.",
-	"DESCRIPTION" : "Various features related to DnD/Pathfinder. Includes rolling some number of d*'s. More feature coming soon(TM)"
+	"DESCRIPTION" : "Various features related to Pathfinder. Includes rolling some number of d*'s. More feature coming soon(TM)"
 }
