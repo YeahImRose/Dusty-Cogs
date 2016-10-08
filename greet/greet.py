@@ -7,16 +7,6 @@ import os
 from pathlib import Path
 import asyncio
 
-try:
-    if not discord.opus.is_loaded():
-        discord.opus.load_opus('libopus-0.dll')
-except OSError:  # Incorrect bitness
-    opus = False
-except:  # Missing opus
-    opus = None
-else:
-    opus = True
-
 class Greet:
     """Plays a sound effect when a user joins a channel"""
 
