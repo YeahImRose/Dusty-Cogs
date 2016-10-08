@@ -26,7 +26,7 @@ Key for rolling settings:
     -user defined roll (format: *d*b*)
 '''
 
-class pathfinder:
+class Pathfinder:
     def __init__(self, bot):
         self.bot = bot
         self.settings = fileIO("data/pathfinder/settings.json", "load")
