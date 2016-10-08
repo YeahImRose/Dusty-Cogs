@@ -5,7 +5,7 @@ import aiohttp
 import asyncio
 import io, os
 
-class moji:
+class Moji:
 	def __init__(self, bot):
 		self.bot = bot
 
