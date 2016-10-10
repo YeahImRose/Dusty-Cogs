@@ -23,19 +23,22 @@ You can install any of the cogs in my repo by doing:
 ##More cog information
 ###Autorole
 This cog allows you to automatically assign new members of your server a role.
-Usage:
- `[p]autorole role "the-role's-name-in-quotes"` sets the role to be given to new users.
- `[p]autorole toggle` switches the state of automatic role assignment
- `[p]autorole` displays help for autorole commands and shows whether autorole is on or off
+<ul>Usage:
+ <li>`[p]autorole role "the-role's-name-in-quotes"` sets the role to be given to new users.</li>
+ <li>`[p]autorole toggle` switches the state of automatic role assignment.</li>
+ <li>`[p]autorole` displays help for autorole commands and shows whether autorole is on or off.</li>
+</ul>
 
 ###Greet
 This cog will cause the bot to play a sound when a user joins the same voice channel as the bot.
-
-Note: The bot will not play the join sound if the bot is playing music. Also, the owner can cause the bot to join their voice channel with the command `[p]joinvoice` in case the bot is not in a voice channel.
+####Note: 
+<p>The bot will not play the join sound if the bot is playing music. Also, the owner can cause the bot to join their voice channel with the command `[p]joinvoice` in case the bot is not in a voice channel.</p>
+<ul>
 Usage:
- `[p]greetset sound "the-sound.extension"` sets the sound that plays when you join the voice channel
- `[p]greetset toggle server/user user-mention-if-needed` will toggle whether or not the bot will play a greeting sound for the server/a user 
- `[p]greetset` displays help for greet commands
+ <li>`[p]greetset sound "the-sound.extension"` sets the sound that plays when you join the voice channel.</li>
+ <li>`[p]greetset toggle server/user user-mention-if-needed` will toggle whether or not the bot will play a greeting sound for the server/a user.</li>
+ <li>`[p]greetset` displays help for greet commands.</li>
+</ul>
 ##Contacting me
   
 If you want to contact me, my Discord name is Awoonar Dust#7332
