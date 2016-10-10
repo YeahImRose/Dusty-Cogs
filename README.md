@@ -2,12 +2,12 @@
 Various cogs for utility/fun
 
 ##Installing cogs
-To use my cogs, you need to first add my repo:
-`[p]cog repo add Dusty-Cogs https://github.com/Lunar-Dust/Dusty-Cogs`
-To get a list of cogs in my repo, use:
-`[p]cog list Dusty-Cogs`
-You can install any of the cogs in my repo by doing:
-`[p]cog install Dusty-Cogs cog-name-goes-here`
+<p>To use my cogs, you need to first add my repo:</p>
+<p><code>[p]cog repo add Dusty-Cogs https://github.com/Lunar-Dust/Dusty-Cogs</code></p>
+<p>To get a list of cogs in my repo, use:</p>
+<p><code>[p]cog list Dusty-Cogs</code></p>
+<p>You can install any of the cogs in my repo by doing:</p>
+<p><code>[p]cog install Dusty-Cogs cog-name-goes-here</code></p>
 
 
 ##Cogs
