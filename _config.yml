@@ -1,5 +1,6 @@
 # build
 markdown: kramdown
+theme: notia
 permalink: /blog/:year/:title/
 exclude:
   - CNAME
