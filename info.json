@@ -1,7 +1,7 @@
 {
 	"AUTHOR" : "Lunar Dust",
-	"INSTALL_MSG" : "Insert joke here",
+	"INSTALL_MSG" : "This repo contains various cogs for server management and fun. For example, there is a Pathfinder cog as well as an autorole cog. If there are any issues you find, contact me somehow about it and give me as much information as possible about it. Thanks!",
 	"NAME" : "Dusty-Cogs",
 	"SHORT" : "Various cogs that do various things",
-	"DESCRIPTION" : "If there are any issues you find, contact me somehow about it and give me as much information as possible about it. Thanks!"
+	"DESCRIPTION" : "Various cogs that do various things. If there are any issues you find, contact me somehow about it and give me as much information as possible about it. Thanks!"
 }
