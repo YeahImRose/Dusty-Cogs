@@ -30,7 +30,7 @@ This cog allows you to automatically assign new members of your server a role.
 ###Greet
 This cog will cause the bot to play a sound when a user joins the same voice channel as the bot.
 ####Note: 
-<p>The bot will not play the join sound if the bot is playing music. Also, the owner can cause the bot to join their voice channel with the command `[p]joinvoice` in case the bot is not in a voice channel.</p>
+<p>The bot will not play the join sound if the bot is playing music. Also, the owner can cause the bot to join their voice channel with the command <code>[p]joinvoice</code> in case the bot is not in a voice channel.</p>
 <ul>
 Usage:
  <li><code>[p]greetset sound "the-sound.extension"</code> sets the sound that plays when you join the voice channel.</li>
