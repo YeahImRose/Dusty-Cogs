@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from cogs.utils import checks
 from __main__ import set_cog, send_cmd_help, settings
-from .utils.dataIO import fileIO
+from .utils.dataIO import dataIO
 from .utils.chat_formatting import *
 import aiohttp
 import asyncio
@@ -13,7 +13,8 @@ class Autorole:
 
     def __init__(self, bot):
         self.bot = bot
-        self.settings = fileIO("data/autorole/settings.json", "load")
+        self.flie_path = "data/autorole/settings.json"
+        self.settings = dataIO.load_json(self.file_path)
 
     def _get_server_from_id(self, serverid):
         return discord.utils.get(self.bot.servers, id=serverid)
@@ -25,7 +26,7 @@ class Autorole:
             self.settings[server.id] = {}
             self.settings[server.id]["ENABLED"] = False
             self.settings[server.id]["ROLE"] = None
-            fileIO("data/autorole/settings.json", "save", self.settings)
+            dataIO.save_json(self.file_path, self.settings)
             
         if self.settings[server.id]["ENABLED"] is True:
             roleid = self.settings[server.id]["ROLE"]
@@ -57,7 +58,7 @@ class Autorole:
             self.settings[server.id] = {}
             self.settings[server.id]["ENABLED"] = False
             self.settings[server.id]["ROLE"] = None
-            fileIO("data/autorole/settings.json", "save", self.settings)
+            dataIO(self.file_path, self.settings)
 
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
@@ -74,11 +75,11 @@ class Autorole:
             if self.settings[server.id]["ENABLED"] is True:
                 self.settings[server.id]["ENABLED"] = False
                 await self.bot.say("Autorole is now disabled.")
-                fileIO("data/autorole/settings.json", "save", self.settings)
+                dataIO(self.file_path, self.settings)
             else:
                 self.settings[server.id]["ENABLED"] = True
                 await self.bot.say("Autorole is now enabled.")
-                fileIO("data/autorole/settings.json", "save", self.settings)
+                dataIO.save_json(self.file_path, self.settings)
 
     @autorole.command(pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_roles=True)
@@ -89,7 +90,7 @@ class Autorole:
         server = ctx.message.server
         self.settings[server.id]["ROLE"] = role.id
         await self.bot.say("Autorole set to " + role.name)
-        fileIO("data/autorole/settings.json", "save", self.settings)
+        dataIO.save_json(self.file_path, self.settings)
 
 def check_folders():
     if not os.path.exists("data/autorole"):
@@ -99,9 +100,9 @@ def check_folders():
 def check_files():
 
     f = "data/autorole/settings.json"
-    if not fileIO(f, "check"):
+    if not dataIO.is_valid_json(f):
         print("Creating default autorole's settings.json...")
-        fileIO(f, "save", {})
+        dataIO.save_json(f, {})
 
 def setup(bot):
     check_folders()
