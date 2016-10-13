@@ -196,4 +196,4 @@ def check_files():
 def setup(bot):
     check_folders()
     check_files()
-    bot.add_cog(pathfinder(bot))
+    bot.add_cog(Pathfinder(bot))
