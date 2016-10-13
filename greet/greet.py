@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from .utils.dataIO import fileIO
+from .utils.dataIO import dataIO
 from .utils import checks
 from __main__ import send_cmd_help
 import os
@@ -12,7 +12,8 @@ class Greet:
 
     def __init__(self, bot):
         self.bot = bot
-        self.settings = fileIO("data/greet/settings.json", "load")
+        self.file_path = "data/greet/settings.json"
+        self.settings = dataIO.load_json(self.file_path)
 
     def voice_client(self, server):
         return self.bot.voice_client_in(server)
@@ -65,7 +66,7 @@ class Greet:
             server = ctx.message.server
             if str(server.id) not in self.settings:
                 self.settings[server.id] = {"ENABLED": False}
-                fileIO("data/greet/settings.json","save", self.settings)
+                dataIO.save_json(self.file_path, self.settings)
             if ctx.invoked_subcommand is None:
                 await send_cmd_help(ctx)
 
@@ -90,7 +91,7 @@ class Greet:
                     self.settings[server.id][ctx.message.author.id][1] = str(path)
                 else:
                     self.settings[server.id][user.id][1] = str(path)
-                fileIO("data/greet/settings.json", "save", self.settings)
+                dataIO.save_json(self.file_path, self.settings)
                 await self.bot.say("Set sound effect for " + user.name)
 
     #This is horrific, sorry
@@ -118,7 +119,7 @@ class Greet:
                 except:
                     self.settings[server.id]["ENABLED"] = True
                 await self.bot.say("Toggled server-wide join sounds to {0}".format(self.settings[server.id]["ENABLED"]))
-                fileIO("data/greet/settings.json", "save", self.settings)
+                dataIO.save_json(self.file_path, self.settings)
         if mode == "user":
             if user == None:
                 await self.bot.say("Please specifiy a user.")
@@ -129,7 +130,7 @@ class Greet:
                 except:
                     self.settings[server.id][user.id][0] = True
                 await self.bot.say("Toggled sound for {0.name} to {1}.".format(user, self.settings[server.id][user.id][0]))
-                fileIO("data/greet/settings.json", "save", self.settings)
+                dataIO.save_json(self.file_path, self.settings)
 
     async def user_join(self, before, after):
         audio = self.bot.get_cog('Audio')
@@ -171,9 +172,9 @@ def check_folders():
 
 def check_files():
     f = "data/greet/settings.json"
-    if not fileIO(f, "check"):
+    if not dataIO.is_valid_json(f):
         print("Creating welcome settings.json...")
-        fileIO(f, "save", {})
+        dataIO.save_json(f, {})
 
 def setup(bot):
     check_folders()
