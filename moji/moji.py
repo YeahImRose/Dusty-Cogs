@@ -52,4 +52,4 @@ def check_folders():
 
 def setup(bot):
 	check_folders()
-	bot.add_cog(moji(bot))
+	bot.add_cog(Moji(bot))
