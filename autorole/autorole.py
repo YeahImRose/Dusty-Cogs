@@ -13,7 +13,7 @@ class Autorole:
 
     def __init__(self, bot):
         self.bot = bot
-        self.flie_path = "data/autorole/settings.json"
+        self.file_path = "data/autorole/settings.json"
         self.settings = dataIO.load_json(self.file_path)
 
     def _get_server_from_id(self, serverid):
