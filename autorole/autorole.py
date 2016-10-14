@@ -58,7 +58,7 @@ class Autorole:
             self.settings[server.id] = {}
             self.settings[server.id]["ENABLED"] = False
             self.settings[server.id]["ROLE"] = None
-            dataIO(self.file_path, self.settings)
+            dataIO.save_json(self.file_path, self.settings)
 
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
@@ -75,7 +75,7 @@ class Autorole:
             if self.settings[server.id]["ENABLED"] is True:
                 self.settings[server.id]["ENABLED"] = False
                 await self.bot.say("Autorole is now disabled.")
-                dataIO(self.file_path, self.settings)
+                dataIO.save_json(self.file_path, self.settings)
             else:
                 self.settings[server.id]["ENABLED"] = True
                 await self.bot.say("Autorole is now enabled.")
