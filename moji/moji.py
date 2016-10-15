@@ -16,10 +16,21 @@ class Moji:
 		Bot must be in the server with the emoji"""
 		for x in list(self.bot.get_all_emojis()):
 			if x.name.lower() == name.lower():
-				async with aiohttp.get(x.url) as r:
-					img_bytes = await r.read()
-					img = io.BytesIO(img_bytes)
-					return await self.bot.send_file(ctx.message.channel, img, filename="img.png")
+				fdir ="data/moji/" + x.server.name
+				fp = fdir + "/{0.name}.png".format(x)
+				if not os.path.exists(fdir):
+					os.mkdir(fdir)
+				if not os.path.isfile(fp):
+					async with aiohttp.get(x.url) as r:
+						img_bytes = await r.read()
+						img = io.BytesIO(img_bytes)
+						with open(fp, 'wb') as o:
+							o.write(img.read())
+						o.close()
+
+#You can uncomment this line if you want c: 
+				#await self.bot.delete_message(ctx.message)
+				return await self.bot.send_file(ctx.message.channel, fp)
 
 	@commands.group(pass_context=True, no_pm=True)
 	async def moji(self, ctx):
