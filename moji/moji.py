@@ -9,7 +9,7 @@ class Moji:
 		self.bot = bot
 
 
-	@commands.command(pass_context=True, no_pm=True)
+	@commands.command(pass_context=True)
 	async def emoji(self, ctx, name: str):
 		"""Send a large custom emoji. 
 
@@ -32,13 +32,13 @@ class Moji:
 				#await self.bot.delete_message(ctx.message)
 				return await self.bot.send_file(ctx.message.channel, fp)
 
-	@commands.group(pass_context=True, no_pm=True)
+	@commands.group(pass_context=True)
 	async def moji(self, ctx):
 		"""Various emoji operations"""
 		if ctx.invoked_subcommand is None:
 			return await send_cmd_help(ctx)
 
-	@moji.command(pass_context=True, no_pm=True)
+	@moji.command(pass_context=True)
 	async def list(self, ctx, server: int = None):
 		"""List all available custom emoji"""
 		server = server
