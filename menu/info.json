@@ -1,0 +1,7 @@
+{
+	"AUTHOR" : "Lunar Dust",
+	"INSTALL_MSG" : "Thank you for downloading one of my cogs! This cog doesn't do anything on it's own, you have to use it in other cogs. If you have any issues please let me know! You'll probably have to do some reading on this one, I haven't added documentation yet.",
+	"NAME" : "menu",
+	"SHORT" : "A menu system based on reactions.",
+	"DESCRIPTION" : "A add-on of sorts to implement reaction menus into cogs! You'll probably have to do some reading on this one, I haven't added documentation yet."
+}
