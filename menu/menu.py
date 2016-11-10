@@ -25,17 +25,24 @@ numbs = {
 __author__ = "Awoonar Dust#7332"
 
 
+def default_check(reaction, user):
+    if user.bot:
+        return False
+    if reaction.emoji in numbs.values():
+        return True
+    else:
+        return False
+
+
+async def _timed_out(self, ctx):
+    return await self.bot.say("Menu has expired.")
+
+
 class Menu:
     def __init__(self, bot):
         self.bot = bot
         self.current_menus = {}
         self.timeout = 15
-
-    def _is_bot(reaction, user):
-        return not user.bot
-
-    async def _timed_out(self, ctx):
-        return await self.bot.say("Menu has expired.")
 
     async def _show_page(self, message: discord.Message, pages: list, count):
         if count != 0:
@@ -45,50 +52,83 @@ class Menu:
         if count < len(pages) - 1:
             await self.bot.add_reaction(message, str(numbs['next']))
 
-    async def _make_confirm_menu(self, ctx, message):
+    async def confirm_menu(self, ctx, choice, message=""):
         if message == "":
-            message = "Are you sure?"
-        
+            message = "```Are you sure?```"
 
-    async def _make_number_menu(self, ctx, message: str, choices: list, page=0, autodelete=True):
+        sent_msg = await self.bot.say(message)
+
+        await self.bot.add_reaction(sent_msg, str(numbs['yes']))
+        await self.bot.add_reaction(sent_msg, str(numbs['no']))
+
+        react = await self.bot.wait_for_reaction(
+            message=sent_msg,
+            check=default_check,
+            user=ctx.message.author,
+            timeout=self.timeout)
+
+        reacts = {v: k for k, v in numbs.items()}
+        react = reacts[react.reaction.emoji]
+
+        if react == "no":
+            return False
+        return choice
+
+    async def number_menu(self, ctx,
+                          message: str, choices: list,
+                          page=0, autodelete=True,
+                          confirm=False):
+
         if message == "" or choices == []:
             return
 
         pages = [choices[x:x + 10] for x in range(0, len(choices), 10)]
 
-        msg = "```\n{0}\n".format(message)
+        choice_msg = ""
 
         for idx, x in enumerate(pages[page], 1):
-            msg += "{0} - {1}\n".format(str(idx), str(x))
+            choice_msg += "{0} - {1}\n".format(str(idx), str(x))
 
-        msg += "```"
-
-        sent_msg = await self.bot.say(msg)
+        sent_msg = await self.bot.say("```\n{0}\n{1}```".format(message, choice_msg))
 
         await self._show_page(sent_msg, pages, page)
 
         self.current_menus[ctx.message.author] = [sent_msg, pages, page]
 
-        react = await self.bot.wait_for_reaction(message=sent_msg, check=Menu._is_bot, user=ctx.message.author, timeout=self.timeout)
+        react = await self.bot.wait_for_reaction(
+            message=sent_msg, check=default_check,
+            user=ctx.message.author, timeout=self.timeout)
 
         reacts = {v: k for k, v in numbs.items()}
         react = reacts[react.reaction.emoji]
 
         if react == "next":
             await self.bot.delete_message(sent_msg)
-            return await self._make_number_menu(ctx, message, choices, page=page + 1)
+            return await self.number_menu(
+                ctx, message, choices, page=page + 1)
         if react == "back":
             await self.bot.delete_message(sent_msg)
-            return await self._make_number_menu(ctx, message, choices, page=page - 1)
+            return await self.number_menu(
+                ctx, message, choices, page=page - 1)
 
         if autodelete:
             await self.bot.delete_message(sent_msg)
+
+        if confirm:
+            return await self.confirm_menu(ctx, react)
+
         if react is None:
             return None
         else:
             return (page * 10 + react)
 
-    async def _custom_menu(self, ctx, message: str, choices, timeout=15, is_open=False, on_timeout=_timed_out, check=_is_bot, custom_code=None):
+    async def _custom_menu(
+            self, ctx,
+            message: str, choices,
+            timeout=15, is_open=False,
+            on_timeout=_timed_out,
+            check=default_check,
+            custom_code=None):
         """A custom menu creator
 Arguements:
     ctx(obvious)
@@ -129,9 +169,9 @@ Returns:
     @commands.command(pass_context=True)
     async def menu(self, ctx, message: str, choices: str):
         choices = choices.split(',')
-        react = await self._make_number_menu(ctx, message, choices, autodelete=True)
-        if react is None:
-            return
+        react = await self.number_menu(ctx, message, choices, autodelete=True, confirm=True)
+        if react is False:
+            return await self.bot.say("Menu cancelled")
         await self.bot.say("{0.message.author} pressed {1}".format(ctx, react))
 
 
