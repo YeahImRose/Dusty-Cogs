@@ -1,0 +1,8 @@
+{
+	"AUTHOR" : "Lunar Dust",
+	"INSTALL_MSG" : "Thank you for downloading one of my cogs! If you have any issues please let me know!",
+	"NAME" : "requester",
+	"SHORT" : "Allows users to gain roles out of a list of roles",
+	"DESCRIPTION" : "Allows users to pick a role to gain from a list of roles.",
+	"TAGS" : ["utility", "management"]
+}
