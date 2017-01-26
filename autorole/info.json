@@ -3,5 +3,6 @@
 	"INSTALL_MSG" : "Thank you for downloading one of my cogs! If you have any issues please let me know!",
 	"NAME" : "autorole",
 	"SHORT" : "Automatically adds a role to users who join your server.",
-	"DESCRIPTION" : "Automatically adds a role to users who join your server."
+	"DESCRIPTION" : "Automatically adds a role to users who join your server.",
+	"TAGS" : ["utility", "automated"]
 }
