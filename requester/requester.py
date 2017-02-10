@@ -2,9 +2,8 @@ import discord
 import os
 from cogs.utils.dataIO import dataIO
 from discord.ext import commands
-from .utils.chat_formatting import *
 from cogs.utils import checks
-import asyncio
+from __main__ import send_cmd_help
 
 
 class Requester:
@@ -33,8 +32,12 @@ class Requester:
     @commands.group(pass_context=True)
     async def rset(self, ctx):
         """Change various settings for Requester"""
+        server = ctx.message.server
+        if self.settings[server.id] is None:
+            self.settings[server.id] = {"ROLES": [],
+                                        "ENABLED": False}
         if ctx.invoked_subcommand is None:
-            return
+            return await send_cmd_help(ctx)
 
     @rset.command(no_pm=True, pass_context=True)
     @checks.admin_or_permissions(manage_roles=True)
@@ -47,10 +50,7 @@ class Requester:
         try:
             s = self.settings[server.id]["ENABLED"]
         except KeyError:
-            if self.settings[server.id] is None:
-                self.settings[server.id] = {}
-            else:
-                s = False
+            s = False
 
         if state.lower() in trues:
             s = True
@@ -71,8 +71,8 @@ class Requester:
         try:
             roles = self.settings[server.id]["ROLES"]
         except KeyError:
-            self.settings[server.id] = {}
             roles = []
+
         if roles:
             if [x for x in server.roles if x.name == role]:
                 roles.append(role.lower())
@@ -91,8 +91,8 @@ class Requester:
         try:
             roles = self.settings[server.id]["ROLES"]
         except KeyError:
-            self.settings[server.id] = {}
             roles = []
+
         if roles:
             if role in roles:
                 roles.remove(role.lower())
