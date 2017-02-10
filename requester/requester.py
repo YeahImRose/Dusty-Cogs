@@ -33,6 +33,10 @@ class Requester:
     async def rset(self, ctx):
         """Change various settings for Requester"""
         server = ctx.message.server
+        try:
+            x = self.settings[server.id]
+        except:
+            self.settings[server.id] = {}
         if self.settings[server.id] is None:
             self.settings[server.id] = {"ROLES": [],
                                         "ENABLED": False}
