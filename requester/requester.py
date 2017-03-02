@@ -12,6 +12,13 @@ class Requester:
         self.path = "data/requester/settings.json"
         self.settings = dataIO.load_json(self.path)
 
+    def _set_default(self, id):
+        self.settings[id] = {
+            "ROLES": [],
+            "ENABLED": False
+        }
+        dataIO.save_json(self.path, self.settings)
+
     @commands.command(name="request", pass_context=True, no_pm=True)
     async def _request(self, ctx, role: str):
         """Gain the role of the requested role if it is included in the role list."""
@@ -33,13 +40,8 @@ class Requester:
     async def rset(self, ctx):
         """Change various settings for Requester"""
         server = ctx.message.server
-        try:
-            x = self.settings[server.id]
-        except:
-            self.settings[server.id] = {}
-        if self.settings[server.id] is None:
-            self.settings[server.id] = {"ROLES": [],
-                                        "ENABLED": False}
+        if server.id not in self.settings.values():
+            self._set_default(server.id)
         if ctx.invoked_subcommand is None:
             return await send_cmd_help(ctx)
 
@@ -51,10 +53,7 @@ class Requester:
         falses = ["false", "off", "disabled", "disable", "0"]
         server = ctx.message.server
 
-        try:
-            s = self.settings[server.id]["ENABLED"]
-        except KeyError:
-            s = False
+        s = self.settings[server.id]["ENABLED"]
 
         if state.lower() in trues:
             s = True
