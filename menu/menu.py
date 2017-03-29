@@ -1,5 +1,4 @@
 import discord
-import raven
 
 
 class Forbidden():
@@ -16,7 +15,6 @@ def default_check(reaction, user):
 class Menu():
     def __init__(self, bot):
         self.bot = bot
-        self.client = raven.Client('https://cd7c70568a1546ceb2d7d8445eeefa26:1c0c799d964643d4b465eee072603f5b@sentry.io/137861')
 
         # Feel free to override this in your cog if you need to
         self.emoji = {
