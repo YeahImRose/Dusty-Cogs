@@ -9,9 +9,8 @@ import string
 import os
 
 
-class PermissionsError:
-    print("Bot probably doesn't have permissions to manage roles."
-          "Check your discord server permissions.\n")
+class PermissionsError(Exception):
+    pass
 
 
 class Autorole:
@@ -28,10 +27,11 @@ class Autorole:
         return discord.utils.get(self.bot.servers, id=serverid)
 
     def _set_default(self, server):
-        self.settings[server.id] = {}
-        self.settings[server.id]["ENABLED"] = False
-        self.settings[server.id]["ROLE"] = None
-        self.settings[server.id]["AGREE_CHANNEL"] = None
+        self.settings[server.id] = {
+            "ENABLED": False,
+            "ROLE": None,
+            "AGREE_CHANNEL": None
+        }
         dataIO.save_json(self.file_path, self.settings)
 
     async def on_message(self, message):
@@ -49,24 +49,25 @@ class Autorole:
                 return
         except:
             return
+        try:
+            if message.content == self.users[user.id]:
+                roleid = self.settings[server.id]["ROLE"]
+                try:
+                    roles = server.roles
+                except AttributeError:
+                    print("Server roles not found, what did you even do?\n")
+                    return
 
-        if message.content == self.users[user.id]:
-            roleid = self.settings[server.id]["ROLE"]
-            try:
-                roles = server.roles
-            except AttributeError:
-                print("Server roles not found, what did you even do?\n")
-                return
-
-            role = discord.utils.get(roles, id=roleid)
-            try:
-                await self.bot.add_roles(user, role)
-                await self.bot.delete_message(message)
-                if user.id in self.messages:
-                    self.messages.pop(user.id, None)
-
-            except discord.Forbidden:
-                raise PermissionError
+                role = discord.utils.get(roles, id=roleid)
+                try:
+                    await self.bot.add_roles(user, role)
+                    await self.bot.delete_message(message)
+                    if user.id in self.messages:
+                        self.messages.pop(user.id, None)
+                except discord.Forbidden:
+                    raise PermissionError
+        except KeyError:
+            return
 
     async def _give_role(self, member):
         server = member.server
@@ -84,12 +85,11 @@ class Autorole:
                     self.bot.get_all_channels(),
                     id=self.settings[server.id]["AGREE_CHANNEL"])
 
-                _temp_msg = ("{.name}, please enter {} "
-                             "to accept these rules".format(member, key))
+                _ = self.settings[server.id]["AGREE_MSG"].format(member, key)
                 try:
-                    await self.bot.send_message(member, _temp_msg)
+                    await self.bot.send_message(member, _)
                 except:
-                    msg = await self.bot.send_message(ch, _temp_msg)
+                    msg = await self.bot.send_message(ch, _)
                     self.messages[member.id] = msg
             else:
                 roleid = self.settings[server.id]["ROLE"]
@@ -156,8 +156,9 @@ class Autorole:
 
     @autorole.command(pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_roles=True)
-    async def channel(self, ctx, channel: str):
+    async def channel(self, ctx, channel: str, *, msg):
         """Set the channel that will be used for accepting the rules.
+        This is not needed and is completely optional
 
         Entering only \"#\" will disable this."""
         server = ctx.message.server
@@ -169,6 +170,9 @@ class Autorole:
         for x in ctx.message.server.channels:
             if x.name == channel:
                 self.settings[server.id]["AGREE_CHANNEL"] = x.id
+                if msg == "":
+                    msg = "{.name} please enter this code: {}"
+                self.settings[server.id]["AGREE_MSG"] = msg
                 await self.bot.say("Agreement channel "
                                    "set to {}".format(x.name))
         dataIO.save_json(self.file_path, self.settings)
