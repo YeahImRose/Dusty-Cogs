@@ -208,25 +208,34 @@ class Autorole:
 
     @autorole.command(pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_roles=True)
-    async def agreement(self, ctx, channel: str, *, msg):
+    async def agreement(self, ctx, *, msg: str):
         """Set the channel that will be used for accepting the rules.
         This is not needed and is completely optional
 
         Entering only \"#\" will disable this."""
         server = ctx.message.server
-        if channel.startswith("#"):
-            channel = channel[1:]
-        if channel == "":
+        channel = msg.split(" ")[0]
+        msg = msg.split(" ")[1:]
+        msg = ' '.join(msg)
+
+        if channel.startswith("<#"):
+            channel = channel[2:]
+            channel = int(channel[:-1])
+        if channel == "#":  # yes, I know this could break- but it's not my fault if the user is dumb enough to break it
             self.settings[server.id]["AGREE_CHANNEL"] = None
             await self.bot.say("Agreement channel cleared")
-        for x in ctx.message.server.channels:
-            if x.name == channel:
-                self.settings[server.id]["AGREE_CHANNEL"] = x.id
-                if msg == "":
-                    msg = "{.name} please enter this code: {}"
-                self.settings[server.id]["AGREE_MSG"] = msg
-                await self.bot.say("Agreement channel "
-                                   "set to {}".format(x.name))
+            return
+        else:
+            if type(channel) == str:
+                ch = discord.utils.get(server.channels, name=channel)
+            else:
+                ch = discord.utils.get(server.channels, id=str(channel))
+            self.settings[server.id]["AGREE_CHANNEL"] = ch.id
+            if not msg:
+                msg = "{name} please enter this code: {key}"
+            self.settings[server.id]["AGREE_MSG"] = msg
+            await self.bot.say("Agreement channel "
+                               "set to {}".format(ch.name))
         dataIO.save_json(self.file_path, self.settings)
 
 
