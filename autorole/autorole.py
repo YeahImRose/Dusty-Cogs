@@ -3,14 +3,9 @@ from discord.ext import commands
 from cogs.utils import checks
 from __main__ import send_cmd_help
 from .utils.dataIO import dataIO
-from .utils.chat_formatting import *
 import random
 import string
 import os
-
-
-class PermissionsError(Exception):
-    pass
 
 
 class Autorole:
@@ -30,17 +25,26 @@ class Autorole:
         self.settings[server.id] = {
             "ENABLED": False,
             "ROLE": None,
-            "AGREE_CHANNEL": None
+            "AGREE_CHANNEL": None,
+            "AGREE_MSG": None
         }
         dataIO.save_json(self.file_path, self.settings)
+
+    async def _no_perms(self, server):
+        m = ("It appears that you haven't given this "
+             "bot enough permissions to use autorole. "
+             "The bot requires the \"Manage Roles\" and "
+             "the \"Manage Messages\" permissions in"
+             "order to use autorole. You can change the "
+             "permissions in the \"Roles\" tab of the "
+             "server settings.")
+        await self.bot.send_message(server, m)
 
     async def on_message(self, message):
         server = message.server
         user = message.author
+        ch = None
         try:
-            if server.id not in self.settings:
-                self._set_default(server)
-
             ch = discord.utils.get(
                 self.bot.get_all_channels(),
                 id=self.settings[server.id]["AGREE_CHANNEL"])
@@ -48,14 +52,17 @@ class Autorole:
             if message.channel != ch:
                 return
         except:
+            if server.id not in self.settings:
+                self._set_default(server)
             return
+
         try:
             if message.content == self.users[user.id]:
                 roleid = self.settings[server.id]["ROLE"]
                 try:
                     roles = server.roles
                 except AttributeError:
-                    print("Server roles not found, what did you even do?\n")
+                    print("This server has no roles... what even?\n")
                     return
 
                 role = discord.utils.get(roles, id=roleid)
@@ -65,50 +72,86 @@ class Autorole:
                     if user.id in self.messages:
                         self.messages.pop(user.id, None)
                 except discord.Forbidden:
-                    raise PermissionError
+                    if server.id in self.settings:
+                        await self._no_perms(server)
         except KeyError:
             return
 
-    async def _give_role(self, member):
+    async def _agree_maker(self, member):
         server = member.server
+        key = ''.join(random.choice(string.ascii_uppercase +
+                                    string.digits) for _ in range(6))
+        # <3 Stackoverflow http://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits-in-python/23728630#23728630
+        self.users[member.id] = key
+        ch = discord.utils.get(
+            self.bot.get_all_channels(),
+            id=self.settings[server.id]["AGREE_CHANNEL"])
+        msg = self.settings[server.id]["AGREE_MSG"]
+        try:
+            msg = msg.format(key=key,
+                             member=member,
+                             name=member.name,
+                             mention=member.mention,
+                             server=server.name)
+        except:
+            pass
+
+        try:
+            msg = await self.bot.send_message(member, msg)
+        except discord.Forbidden:
+            msg = await self.bot.send_message(ch, msg)
+        self.messages[member.id] = msg
+
+    async def _auto_give(self, member):
+        server = member.server
+        try:
+            roleid = self.settings[server.id]["ROLE"]
+            roles = server.roles
+        except KeyError:
+            return
+        except AttributeError:
+            print("This server has no roles... what even?\n")
+            return
+        role = discord.utils.get(roles, id=roleid)
+        try:
+            await self.bot.add_roles(member, role)
+        except discord.Forbidden:
+            if server.id in self.settings:
+                await self._no_perms(server)
+
+    async def _verify_json(self, e, *a, **k):
+        s = self.last_server
+        try:
+            _d = self.settings[s.id]
+        except KeyError:
+            self._set_default(s)
+        _k = _d.keys()
+
+        # Fix any potential JSON issues because I break things a lot
+        if "ENABLED" not in _k:
+            self._set_default(s)
+            print("Please stop messing with the autorole JSON\n")
+            return
+        if "ROLE" not in _k:
+            self._set_default(s)
+            print("Please stop messing with the autorole JSON\n")
+            return
+        if "AGREE_CHANNEL" not in _k:
+            self.settings[s.id]["AGREE_CHANNEL"] = None
+        if "AGREE_MSG" not in _k:
+            self.settings[s.id]["AGREE_MSG"] = None
+
+    async def _roler(self, member):
+        server = member.server
+        self.last_server = server  # In case something breaks
         if server.id not in self.settings:
             self._set_default(server)
 
         if self.settings[server.id]["ENABLED"]:
             if self.settings[server.id]["AGREE_CHANNEL"]:
-                # <3 Stackoverflow http://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits-in-python/23728630#23728630
-                key = ''.join(random.choice(string.ascii_uppercase +
-                                            string.digits) for _ in range(6))
-                self.users[member.id] = key
-
-                ch = discord.utils.get(
-                    self.bot.get_all_channels(),
-                    id=self.settings[server.id]["AGREE_CHANNEL"])
-
-                _ = self.settings[server.id]["AGREE_MSG"]
-                try:
-                    _ = _.format(member, key)
-                except:
-                    pass
-                try:
-                    await self.bot.send_message(member, _)
-                except:
-                    msg = await self.bot.send_message(ch, _)
-                    self.messages[member.id] = msg
+                await self._agree_maker(member)
             else:  # Immediately give the new user the role
-                roleid = self.settings[server.id]["ROLE"]
-                try:
-                    roles = server.roles
-                except AttributeError:
-                    print("Server roles not found, what did you even do?\n")
-                    return
-
-                role = discord.utils.get(roles, id=roleid)
-                try:
-                    await self.bot.add_roles(member, role)
-
-                except discord.Forbidden:
-                    raise PermissionError
+                await self._auto_give(member)
 
     @commands.group(name="autorole", pass_context=True, no_pm=True)
     async def autorole(self, ctx):
@@ -207,4 +250,5 @@ def setup(bot):
 
     n = Autorole(bot)
     bot.add_cog(n)
-    bot.add_listener(n._give_role, "on_member_join")
+    bot.add_listener(n._roler, "on_member_join")
+    bot.add_listener(n._verify_json, "on_error")
