@@ -74,8 +74,8 @@ class Autorole:
         if server.id not in self.settings:
             self._set_default(server)
 
-        if self.settings[server.id]["ENABLED"] is True:
-            if self.settings[server.id]["AGREE_CHANNEL"] is not None:
+        if self.settings[server.id]["ENABLED"]:
+            if self.settings[server.id]["AGREE_CHANNEL"]:
                 # <3 Stackoverflow http://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits-in-python/23728630#23728630
                 key = ''.join(random.choice(string.ascii_uppercase +
                                             string.digits) for _ in range(6))
@@ -85,13 +85,17 @@ class Autorole:
                     self.bot.get_all_channels(),
                     id=self.settings[server.id]["AGREE_CHANNEL"])
 
-                _ = self.settings[server.id]["AGREE_MSG"].format(member, key)
+                _ = self.settings[server.id]["AGREE_MSG"]
+                try:
+                    _ = _.format(member, key)
+                except:
+                    pass
                 try:
                     await self.bot.send_message(member, _)
                 except:
                     msg = await self.bot.send_message(ch, _)
                     self.messages[member.id] = msg
-            else:
+            else:  # Immediately give the new user the role
                 roleid = self.settings[server.id]["ROLE"]
                 try:
                     roles = server.roles
@@ -113,10 +117,15 @@ class Autorole:
         Requires the manage roles permission"""
         server = ctx.message.server
         if server.id not in self.settings:
-            self.settings[server.id] = {}
-            self.settings[server.id]["ENABLED"] = False
-            self.settings[server.id]["ROLE"] = None
-            self.settings[server.id]["AGREE_CHANNEL"] = None
+            self.settings[server.id] = {
+                "ENABLED": False,
+                "ROLE": None,
+                "AGREE_CHANNEL": None,
+                "AGREE_MSG": None
+            }
+            dataIO.save_json(self.file_path, self.settings)
+        if "AGREE_MSG" not in self.settings[server.id].keys():
+            self.settings[server.id]["AGREE_MSG"] = None
             dataIO.save_json(self.file_path, self.settings)
 
         if ctx.invoked_subcommand is None:
@@ -156,7 +165,7 @@ class Autorole:
 
     @autorole.command(pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_roles=True)
-    async def channel(self, ctx, channel: str, *, msg):
+    async def agreement(self, ctx, channel: str, *, msg):
         """Set the channel that will be used for accepting the rules.
         This is not needed and is completely optional
 
