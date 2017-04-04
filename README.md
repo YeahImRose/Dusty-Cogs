@@ -24,9 +24,10 @@ Various cogs for utility/fun
 <p> If you want the users to recieve the role immediately, do NOT set an agreement channel</p>
 This cog allows you to automatically assign new members of your server a role.
 <ul>Usage:
- <li><code>[p]autorole role "the-role's-name-in-quotes"</code> sets the role to be given to new users.</li>
- <li><code>[p]autorole toggle</code> switches the state of automatic role assignment.</li>
  <li><code>[p]autorole</code> displays help for autorole commands and shows whether autorole is on or off.</li>
+ <li><code>[p]autorole role (the role's name [use quotes if the name has a space])</code> sets the role to be given to new users.</li>
+ <li><code>[p]autorole toggle</code> switches the state of automatic role assignment.</li>
+ <li><code>[p]autorole agreement (#channel_for_agreements) [agreement message] </code> Sets a terms of service/agreement before the role is given.</li>
 </ul>
 
 ### Greet
