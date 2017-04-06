@@ -43,17 +43,15 @@ class Autorole:
     async def on_message(self, message):
         server = message.server
         user = message.author
-        ch = None
+        if server.id not in self.settings:
+            self._set_default(server)
+            return
         try:
-            ch = discord.utils.get(
-                self.bot.get_all_channels(),
-                id=self.settings[server.id]["AGREE_CHANNEL"])
-
-            if message.channel != ch:
+            if self.settings[server.id]["AGREE_CHANNEL"] is not None:
+                pass
+            else:
                 return
         except:
-            if server.id not in self.settings:
-                self._set_default(server)
             return
 
         try:
@@ -79,6 +77,8 @@ class Autorole:
 
     async def _agree_maker(self, member):
         server = member.server
+        self.last_server = server
+        await self._verify_json(None)
         key = ''.join(random.choice(string.ascii_uppercase +
                                     string.digits) for _ in range(6))
         # <3 Stackoverflow http://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits-in-python/23728630#23728630
@@ -121,6 +121,8 @@ class Autorole:
 
     async def _verify_json(self, e, *a, **k):
         s = self.last_server
+        if len(self.settings[s.id].keys()) >= 4:
+            return
         try:
             _d = self.settings[s.id]
         except KeyError:
@@ -147,8 +149,8 @@ class Autorole:
         if server.id not in self.settings:
             self._set_default(server)
 
-        if self.settings[server.id]["ENABLED"]:
-            if self.settings[server.id]["AGREE_CHANNEL"]:
+        if self.settings[server.id]["ENABLED"] is True:
+            if self.settings[server.id]["AGREE_CHANNEL"] is not None:
                 await self._agree_maker(member)
             else:  # Immediately give the new user the role
                 await self._auto_give(member)
@@ -173,8 +175,11 @@ class Autorole:
 
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
-            await self.bot.say("```Current autorole state: {}```".format(
-                self.settings[server.id]["ENABLED"]))
+            try:
+                await self.bot.say("```Current autorole state: {}```".format(
+                    self.settings[server.id]["ENABLED"]))
+            except KeyError:
+                self._set_default(server)
 
     @autorole.command(pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_roles=True)
@@ -217,6 +222,7 @@ class Autorole:
         channel = msg.split(" ")[0]
         msg = msg.split(" ")[1:]
         msg = ' '.join(msg)
+        ch = None
 
         if channel.startswith("<#"):
             channel = channel[2:]
@@ -230,7 +236,10 @@ class Autorole:
                 ch = discord.utils.get(server.channels, name=channel)
             else:
                 ch = discord.utils.get(server.channels, id=str(channel))
-            self.settings[server.id]["AGREE_CHANNEL"] = ch.id
+            try:
+                self.settings[server.id]["AGREE_CHANNEL"] = ch.id
+            except AttributeError as e:
+                await self.bot.say("Channel not found!")
             if not msg:
                 msg = "{name} please enter this code: {key}"
             self.settings[server.id]["AGREE_MSG"] = msg
