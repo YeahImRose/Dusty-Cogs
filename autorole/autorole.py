@@ -1,9 +1,11 @@
 import discord
 from discord.ext import commands
-from cogs.checks import *
-from JSONman import JMan
+from cogs.utils import checks
+from __main__ import send_cmd_help
+from .utils.dataIO import dataIO
 import random
 import string
+import os
 
 
 class Autorole:
@@ -11,7 +13,8 @@ class Autorole:
 
     def __init__(self, bot):
         self.bot = bot
-        self.data = JMan("data")
+        self.file_path = "data/autorole/settings.json"
+        self.settings = dataIO.load_json(self.file_path)
         self.users = {}
         self.messages = {}
 
@@ -19,13 +22,13 @@ class Autorole:
         return discord.utils.get(self.bot.servers, id=serverid)
 
     def _set_default(self, server):
-        self.data[server.id] = {
+        self.settings[server.id] = {
             "ENABLED": False,
             "ROLE": None,
             "AGREE_CHANNEL": None,
             "AGREE_MSG": None
         }
-        self.data.save()
+        dataIO.save_json(self.file_path, self.settings)
 
     async def _no_perms(self, server):
         m = ("It appears that you haven't given this "
@@ -42,11 +45,11 @@ class Autorole:
         user = message.author
         if server is None:
             return
-        if server.id not in self.data:
+        if server.id not in self.settings:
             self._set_default(server)
             return
         try:
-            if self.data[server.id]["AGREE_CHANNEL"] is not None:
+            if self.settings[server.id]["AGREE_CHANNEL"] is not None:
                 pass
             else:
                 return
@@ -55,7 +58,7 @@ class Autorole:
 
         try:
             if message.content == self.users[user.id]:
-                roleid = self.data[server.id]["ROLE"]
+                roleid = self.settings[server.id]["ROLE"]
                 try:
                     roles = server.roles
                 except AttributeError:
@@ -69,7 +72,7 @@ class Autorole:
                     if user.id in self.messages:
                         self.messages.pop(user.id, None)
                 except discord.Forbidden:
-                    if server.id in self.data:
+                    if server.id in self.settings:
                         await self._no_perms(server)
         except KeyError:
             return
@@ -84,8 +87,8 @@ class Autorole:
         self.users[member.id] = key
         ch = discord.utils.get(
             self.bot.get_all_channels(),
-            id=self.data[server.id]["AGREE_CHANNEL"])
-        msg = self.data[server.id]["AGREE_MSG"]
+            id=self.settings[server.id]["AGREE_CHANNEL"])
+        msg = self.settings[server.id]["AGREE_MSG"]
         try:
             msg = msg.format(key=key,
                              member=member,
@@ -104,7 +107,7 @@ class Autorole:
     async def _auto_give(self, member):
         server = member.server
         try:
-            roleid = self.data[server.id]["ROLE"]
+            roleid = self.settings[server.id]["ROLE"]
             roles = server.roles
         except KeyError:
             return
@@ -115,15 +118,15 @@ class Autorole:
         try:
             await self.bot.add_roles(member, role)
         except discord.Forbidden:
-            if server.id in self.data:
+            if server.id in self.settings:
                 await self._no_perms(server)
 
     async def _verify_json(self, e, *a, **k):
         s = self.last_server
-        if len(self.data[s.id].keys()) >= 4:
+        if len(self.settings[s.id].keys()) >= 4:
             return
         try:
-            _d = self.data[s.id]
+            _d = self.settings[s.id]
         except KeyError:
             self._set_default(s)
         _k = _d.keys()
@@ -138,18 +141,18 @@ class Autorole:
             print("Please stop messing with the autorole JSON\n")
             return
         if "AGREE_CHANNEL" not in _k:
-            self.data[s.id]["AGREE_CHANNEL"] = None
+            self.settings[s.id]["AGREE_CHANNEL"] = None
         if "AGREE_MSG" not in _k:
-            self.data[s.id]["AGREE_MSG"] = None
+            self.settings[s.id]["AGREE_MSG"] = None
 
     async def _roler(self, member):
         server = member.server
         self.last_server = server  # In case something breaks
-        if server.id not in self.data:
+        if server.id not in self.settings:
             self._set_default(server)
 
-        if self.data[server.id]["ENABLED"] is True:
-            if self.data[server.id]["AGREE_CHANNEL"] is not None:
+        if self.settings[server.id]["ENABLED"] is True:
+            if self.settings[server.id]["AGREE_CHANNEL"] is not None:
                 await self._agree_maker(member)
             else:  # Immediately give the new user the role
                 await self._auto_give(member)
@@ -160,60 +163,58 @@ class Autorole:
 
         Requires the manage roles permission"""
         server = ctx.message.server
-        if server.id not in self.data:
-            self.data[server.id] = {
+        if server.id not in self.settings:
+            self.settings[server.id] = {
                 "ENABLED": False,
                 "ROLE": None,
                 "AGREE_CHANNEL": None,
                 "AGREE_MSG": None
             }
-            self.data.save()
-        if "AGREE_MSG" not in self.data[server.id].keys():
-            self.data[server.id]["AGREE_MSG"] = None
-            self.data.save()
+            dataIO.save_json(self.file_path, self.settings)
+        if "AGREE_MSG" not in self.settings[server.id].keys():
+            self.settings[server.id]["AGREE_MSG"] = None
+            dataIO.save_json(self.file_path, self.settings)
 
         if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
+            await send_cmd_help(ctx)
             try:
                 await self.bot.say("```Current autorole state: {}```".format(
-                    self.data[server.id]["ENABLED"]))
+                    self.settings[server.id]["ENABLED"]))
             except KeyError:
                 self._set_default(server)
 
     @autorole.command(pass_context=True, no_pm=True)
-    @has_permissions(manage_roles=True)
+    @checks.admin_or_permissions(manage_roles=True)
     async def toggle(self, ctx):
         """Enables/Disables autorole"""
         server = ctx.message.server
-        if self.data[server.id]["ROLE"] is None:
+        if self.settings[server.id]["ROLE"] is None:
             await self.bot.say("You haven't set a role to give to new users! "
                                "Use `{}autorole role \"role\"` to set it!"
                                .format(ctx.prefix))
         else:
-            if self.data[server.id]["ENABLED"] is True:
-                self.data[server.id]["ENABLED"] = False
+            if self.settings[server.id]["ENABLED"] is True:
+                self.settings[server.id]["ENABLED"] = False
                 await self.bot.say("Autorole is now disabled.")
-                self.data.save()
+                dataIO.save_json(self.file_path, self.settings)
             else:
-                self.data[server.id]["ENABLED"] = True
+                self.settings[server.id]["ENABLED"] = True
                 await self.bot.say("Autorole is now enabled.")
-                self.data.save()
+                dataIO.save_json(self.file_path, self.settings)
 
     @autorole.command(pass_context=True, no_pm=True)
-    @has_permissions(manage_roles=True)
-    async def role(self, ctx, role: discord.Role=None):
+    @checks.admin_or_permissions(manage_roles=True)
+    async def role(self, ctx, role: discord.Role):
         """Set role for autorole to assign.
 
         Use quotation marks around the role if it contains spaces."""
-        if role is None:
-            await self.bot.send_cmd_help(ctx)
         server = ctx.message.server
-        self.data[server.id]["ROLE"] = role.id
+        self.settings[server.id]["ROLE"] = role.id
         await self.bot.say("Autorole set to " + role.name)
-        self.data.save()
+        dataIO.save_json(self.file_path, self.settings)
 
     @autorole.command(pass_context=True, no_pm=True)
-    @has_permissions(manage_roles=True)
+    @checks.admin_or_permissions(manage_roles=True)
     async def agreement(self, ctx, *, msg: str):
         """Set the channel that will be used for accepting the rules.
         This is not needed and is completely optional
@@ -229,7 +230,7 @@ class Autorole:
             channel = channel[2:]
             channel = int(channel[:-1])
         if channel == "#":  # yes, I know this could break- but it's not my fault if the user is dumb enough to break it
-            self.data[server.id]["AGREE_CHANNEL"] = None
+            self.settings[server.id]["AGREE_CHANNEL"] = None
             await self.bot.say("Agreement channel cleared")
             return
         else:
@@ -238,18 +239,35 @@ class Autorole:
             else:
                 ch = discord.utils.get(server.channels, id=str(channel))
             try:
-                self.data[server.id]["AGREE_CHANNEL"] = ch.id
+                self.settings[server.id]["AGREE_CHANNEL"] = ch.id
             except AttributeError as e:
                 await self.bot.say("Channel not found!")
             if not msg:
                 msg = "{name} please enter this code: {key}"
-            self.data[server.id]["AGREE_MSG"] = msg
+            self.settings[server.id]["AGREE_MSG"] = msg
             await self.bot.say("Agreement channel "
                                "set to {}".format(ch.name))
-        self.data.save()
+        dataIO.save_json(self.file_path, self.settings)
+
+
+def check_folders():
+    if not os.path.exists("data/autorole"):
+        print("Creating data/autorole folder...")
+        os.makedirs("data/autorole")
+
+
+def check_files():
+
+    f = "data/autorole/settings.json"
+    if not dataIO.is_valid_json(f):
+        print("Creating default autorole's settings.json...")
+        dataIO.save_json(f, {})
 
 
 def setup(bot):
+    check_folders()
+    check_files()
+
     n = Autorole(bot)
     bot.add_cog(n)
     bot.add_listener(n._roler, "on_member_join")
