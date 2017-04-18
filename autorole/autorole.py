@@ -102,6 +102,8 @@ class Autorole:
             msg = await self.bot.send_message(member, msg)
         except discord.Forbidden:
             msg = await self.bot.send_message(ch, msg)
+        except discord.HTTPException:
+            return
         self.messages[member.id] = msg
 
     async def _auto_give(self, member):
