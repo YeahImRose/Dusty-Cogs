@@ -1,4 +1,3 @@
-import discord
 import os
 from cogs.utils.dataIO import dataIO
 from discord.ext import commands
@@ -21,7 +20,7 @@ class Requester:
 
     @commands.command(name="request", pass_context=True, no_pm=True)
     async def _request(self, ctx, role: str):
-        """Gain the role of the requested role if it is included in the role list."""
+        """Gain the requested role if available."""
         user = ctx.message.author
         server = ctx.message.server
         add = None
@@ -29,21 +28,26 @@ class Requester:
             return
 
         if role.lower() in self.settings[server.id]["ROLES"]:
-            r = [x for x in server.roles if x.name.lower() == role.lower()][0]
-            if r:
-                add = r
+            try:
+                role = role.lower()
+                r = [x for x in server.roles if x.name.lower() == role][0]
+                if r:
+                    add = r
+            except IndexError:
+                await self.bot.say("Role not found/not requestable!")
+                return
 
         if add:
             await self.bot.add_roles(user, add)
 
-    @commands.group(pass_context=True)
+    @commands.group(no_pm=True, pass_context=True)
     async def rset(self, ctx):
         """Change various settings for Requester"""
         server = ctx.message.server
-        if server.id not in self.settings.values():
+        if server.id not in self.settings.keys():
             self._set_default(server.id)
         if ctx.invoked_subcommand is None:
-            return await send_cmd_help(ctx)
+            await send_cmd_help(ctx)
 
     @rset.command(no_pm=True, pass_context=True)
     @checks.admin_or_permissions(manage_roles=True)
@@ -60,11 +64,12 @@ class Requester:
         elif state.lower() in falses:
             s = False
         else:
-            return await self.bot.say("Current state: {}".format(str(s).lower()))
+            await self.bot.say("Current state: {}".format(str(s).lower()))
+            return
 
-        self.settings[server.id]["ENABLED"] = bool(s)
+        self.settings[server.id]["ENABLED"] = s
         dataIO.save_json(self.path, self.settings)
-        await self.bot.say("State set toggle {}".format(str(s).lower()))
+        await self.bot.say("Set toggle state to {}".format(str(s).lower()))
 
     @rset.command(no_pm=True, pass_context=True)
     @checks.mod_or_permissions(manage_roles=True)
@@ -75,10 +80,10 @@ class Requester:
             roles = self.settings[server.id]["ROLES"]
         except KeyError:
             roles = []
-
+        role = role.lower()
         if roles:
-            if [x for x in server.roles if x.name == role]:
-                roles.append(role.lower())
+            if [x for x in server.roles if x.name.lower() == role]:
+                roles.append(role)
         else:
             roles = [role]
 
@@ -94,15 +99,29 @@ class Requester:
         try:
             roles = self.settings[server.id]["ROLES"]
         except KeyError:
-            roles = []
+            await self.bot.say("You haven't added any roles!")
+            return
 
-        if roles:
+        if roles:  # You can never be too safe
             if role in roles:
                 roles.remove(role.lower())
 
         self.settings[server.id]["ROLES"] = roles
         dataIO.save_json(self.path, self.settings)
         await self.bot.say("Role {} removed.".format(role))
+
+    @rset.command(no_pm=True, pass_context=True,
+                  name="list")
+    async def _list(self, ctx):
+        """Lists all requestable roles"""
+        server = ctx.message.server
+        try:
+            roles = self.settings[server.id]["ROLES"]
+        except KeyError:
+            roles = []
+
+        roles = '\n'.join(roles)
+        await self.bot.say("Requestable roles:\n{}".format(roles))
 
 
 def check_folders():
