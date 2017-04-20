@@ -154,10 +154,14 @@ class Autorole:
             self._set_default(server)
 
         if self.settings[server.id]["ENABLED"] is True:
-            if self.settings[server.id]["AGREE_CHANNEL"] is not None:
-                await self._agree_maker(member)
-            else:  # Immediately give the new user the role
-                await self._auto_give(member)
+            try:
+                if self.settings[server.id]["AGREE_CHANNEL"] is not None:
+                    await self._agree_maker(member)
+                else:  # Immediately give the new user the role
+                    await self._auto_give(member)
+            except KeyError as e:
+                self.last_server = server
+                await self._verify_json(e)
 
     @commands.group(name="autorole", pass_context=True, no_pm=True)
     async def autorole(self, ctx):
@@ -217,34 +221,36 @@ class Autorole:
 
     @autorole.command(pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_roles=True)
-    async def agreement(self, ctx, *, msg: str):
-        """Set the channel that will be used for accepting the rules.
+    async def agreement(self, ctx, channel: str,
+                        *, msg: str=None):
+        """Set the channel and message that will be used for accepting the rules.
         This is not needed and is completely optional
 
-        Entering only \"#\" will disable this."""
+        Entering only \"clear\" will disable this."""
         server = ctx.message.server
-        channel = msg.split(" ")[0]
-        msg = msg.split(" ")[1:]
-        msg = ' '.join(msg)
-        ch = None
+
+        if not channel:
+            await self.bot.send_cmd_help(ctx)
+            return
 
         if channel.startswith("<#"):
-            channel = channel[2:]
-            channel = int(channel[:-1])
-        if channel == "#":  # yes, I know this could break- but it's not my fault if the user is dumb enough to break it
+            channel = channel[2:-1]
+
+        if channel == "clear":
             self.settings[server.id]["AGREE_CHANNEL"] = None
             await self.bot.say("Agreement channel cleared")
-            return
         else:
-            if type(channel) == str:
-                ch = discord.utils.get(server.channels, name=channel)
-            else:
-                ch = discord.utils.get(server.channels, id=str(channel))
+            ch = discord.utils.get(server.channels, name=channel)
+            if ch is None:
+                ch = discord.utils.get(server.channels, id=channel)
+            if ch is None:
+                await self.bot.say("Channel not found!")
+                return
             try:
                 self.settings[server.id]["AGREE_CHANNEL"] = ch.id
             except AttributeError as e:
-                await self.bot.say("Channel not found!")
-            if not msg:
+                await self.bot.say("Something went wrong...")
+            if msg is None:
                 msg = "{name} please enter this code: {key}"
             self.settings[server.id]["AGREE_MSG"] = msg
             await self.bot.say("Agreement channel "
