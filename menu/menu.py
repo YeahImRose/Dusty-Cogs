@@ -1,15 +1,11 @@
 import discord
 
 
-class Forbidden():
-    pass
-
-
 def default_check(reaction, user):
-        if user.bot:
-            return False
-        else:
-            return True
+    if user.bot:
+        return False
+    else:
+        return True
 
 
 class Menu():
@@ -39,7 +35,10 @@ class Menu():
         user = ctx.message.server.get_member(self.bot.user.id)
         return ctx.message.channel.permissions_for(user)
 
-    async def _add_reactions(self, message, choices: list, page, emoji, loop=False):
+    async def _add_reactions(self, message,
+                             choices: list,
+                             page, emoji,
+                             loop=False):
         pages = [choices[x:x + 10] for x in range(0, len(choices), 10)]
         if page > len(pages):
             page = 0
@@ -53,7 +52,11 @@ class Menu():
             await self.bot.add_reaction(message, str(emoji['next']))
         return
 
-    async def menu(self, ctx, _type: int, messages, choices: int = 1, **kwargs):
+    async def menu(self, ctx,
+                   _type: int,
+                   messages,
+                   choices: int = 1,
+                   **kwargs):
         """Creates and manages a new menu
 
         Required arguments:
@@ -109,10 +112,10 @@ class Menu():
                 await self.bot.edit_message(message, messages)
         else:
             if type(messages) == discord.Embed:
-                message = await self.bot.send_message(ctx.message.channel,
-                                                      embed=messages)
+                return await self.bot.send_message(ctx.message.channel,
+                                                   embed=messages)
             else:
-                message = await self.bot.say(messages)
+                return await self.bot.say(messages)
 
     async def _number_menu(self, ctx, messages, choices, **kwargs):
         page = kwargs.get('page', 0)
@@ -123,7 +126,7 @@ class Menu():
         message = kwargs.get('message', None)
         loop = kwargs.get('loop', False)
 
-        await self.show_menu(ctx, message, messages)
+        message = await self.show_menu(ctx, message, messages)
 
         await self._add_reactions(message, choices, page, emoji, loop)
 
@@ -148,17 +151,13 @@ class Menu():
 
         try:
             await self.bot.remove_reaction(message, emoji[react], r.user)
-        except Forbidden:
+        except discord.Forbidden:
             await self.bot.delete_message(message)
             message = None
 
         return await self._number_menu(
             ctx, message,
-            choices, page=page,
-            timeout=timeout,
-            check=check, is_open=is_open,
-            emoji=emoji, message=message,
-            loop=loop)
+            choices, **kwargs)
 
     async def _confirm_menu(self, ctx, message, **kwargs):
         timeout = kwargs.get('timeout', 15)
