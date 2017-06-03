@@ -157,8 +157,8 @@ class Greet:
             #    await self._join_voice_channel(channel)
             voice_client = await self._create_ffmpeg_player(server, str(self.settings[server.id][after.id][1]), local=True)
             voice_client.audio_player.start()
-        except:
-            print("Something went very wrong...")
+        except Exception as e:
+            print("Something went very wrong...\n{}".format(e))
 
 
 def check_folders():
