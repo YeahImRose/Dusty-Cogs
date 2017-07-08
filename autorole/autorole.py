@@ -95,8 +95,8 @@ class Autorole:
                              name=member.name,
                              mention=member.mention,
                              server=server.name)
-        except:
-            pass
+        except Exception as e:
+            self.bot.logger.error(e)
 
         try:
             msg = await self.bot.send_message(member, msg)
