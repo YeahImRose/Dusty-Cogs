@@ -127,8 +127,7 @@ class Desutils:
             server = message.server
             prefix_list = [x for x in self.bot.settings.prefixes]
             serverprefix_list = [x for x in self.bot.settings.get_server_prefixes(server)]
-            msg = ""
-            msg += "```Global prefixes: {0}\n".format(', '.join(prefix_list))
+            msg = "```Global prefixes: {0}\n".format(', '.join(prefix_list))
             msg += "Server prefixes: {0}```".format(', '.join(serverprefix_list))
             await self.bot.send_message(message.channel, msg)
 
