@@ -124,8 +124,11 @@ class Desutils:
 
     async def prefixes(self, message):
         if message.content == "prefixes":
-            prefix_list = [x for x in self.bot.command_prefix]
-            msg = "```{0}```".format(', '.join(prefix_list))
+            server = message.server
+            prefix_list = [x for x in self.bot.settings.prefixes]
+            serverprefix_list = [x for x in self.bot.settings.get_server_prefixes(server)]
+            msg = "```Global prefixes: {0}\n".format(', '.join(prefix_list))
+            msg += "Server prefixes: {0}```".format(', '.join(serverprefix_list))
             await self.bot.send_message(message.channel, msg)
 
     @checks.is_owner()
