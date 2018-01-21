@@ -1,4 +1,5 @@
 import os
+import discord
 from cogs.utils.dataIO import dataIO
 from discord.ext import commands
 from cogs.utils import checks
@@ -25,6 +26,7 @@ class Requester:
         server = ctx.message.server
         add = None
         if not self.settings[server.id]["ENABLED"]:
+            await self.bot.say("Role requesting is not enabled on this server.")
             return
 
         if role.lower() in self.settings[server.id]["ROLES"]:
@@ -36,9 +38,45 @@ class Requester:
             except IndexError:
                 await self.bot.say("Role not found/not requestable!")
                 return
+        else:
+            await self.bot.say("Role not found/not requestable!")
+            return
 
         if add:
-            await self.bot.add_roles(user, add)
+            try:
+                await self.bot.add_roles(user, add)
+            except discord.Forbidden:
+                await self.bot.say("Bot doesn\'t have high enough permissions")
+
+    @commands.command(name="dequest", pass_context=True, no_pm=True)
+    async def _dequest(self, ctx, role: str):
+        """Removes the requested role if possible."""
+        user = ctx.message.author
+        server = ctx.message.server
+        remove = None
+        if not self.settings[server.id]["ENABLED"]:
+            await self.bot.say("Role requesting is not enabled on this server.")
+            return
+
+        if role.lower() in self.settings[server.id]["ROLES"]:
+            try:
+                role = role.lower()
+                r = [x for x in server.roles if x.name.lower() == role][0]
+                if r:
+                    remove = r
+            except IndexError:
+                await self.bot.say("Role not found/not requestable!")
+                return
+        else:
+            await self.bot.say("Role not found/not requestable!")
+            return
+
+        if remove:
+            try:
+                await self.bot.remove_roles(user, remove)
+            except discord.Forbidden:
+                await self.bot.say("Bot doesn\'t have high enough permissions")
+
 
     @commands.group(no_pm=True, pass_context=True)
     async def rset(self, ctx):
