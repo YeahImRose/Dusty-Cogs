@@ -209,4 +209,5 @@ class Desutils:
 
 def setup(bot):
     n = Desutils(bot)
+    bot.add_listener(n.prefixes, 'on_message')
     bot.add_cog(n)
