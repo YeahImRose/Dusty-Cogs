@@ -20,7 +20,7 @@ class Moji:
                 os.rename("data/moji/" + x.server.name,
                           "data/moji/" + x.server.id)
 
-    def on_ready(self):
+    async def on_ready(self):
         self.update_folders()
 
     @commands.command(pass_context=True, no_pm=True)

@@ -151,6 +151,15 @@ class Desutils:
             elif text and x.content.startswith(text):
                 return await self.bot.unpin_message(x)
 
+    async def prefixes(self, message):
+        if message.content == "prefixes":
+            server = message.server
+            prefix_list = [x for x in self.bot.settings.prefixes]
+            serverprefix_list = [x for x in self.bot.settings.get_server_prefixes(server)]
+            msg = "```Global prefixes: {0}\n".format(', '.join(prefix_list))
+            msg += "Server prefixes: {0}```".format(', '.join(serverprefix_list))
+            await self.bot.send_message(message.channel, msg)
+
     @checks.is_owner()
     @commands.command(pass_context=True, no_pm=True)
     async def listcogs(self, ctx):
