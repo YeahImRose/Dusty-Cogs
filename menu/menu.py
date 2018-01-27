@@ -7,56 +7,74 @@ def default_check(reaction, user):
     else:
         return True
 
+# Feel free to override this in your cog if you need to
+emoji = {
+    0: "0⃣",
+    1: "1⃣",
+    2: "2⃣",
+    3: "3⃣",
+    4: "4⃣",
+    5: "5⃣",
+    6: "6⃣",
+    7: "7⃣",
+    8: "8⃣",
+    9: "9⃣",
+    10: "🔟",
+    "next": "➡",
+    "back": "⬅",
+    "yes": "✅",
+    "no": "❌"
+}
+
+
+class menu_info(object):
+    def __init__(self,
+                 page: int=0,
+                 timeout: int=15,
+                 check=default_check,
+                 is_open: bool=False,
+                 _emoji=emoji,
+                 message=None,
+                 loop: bool=False):
+        self.page = page
+        self.timeout = timeout
+        self.check = check
+        self.is_open = is_open
+        self.emoji = _emoji
+        self.message = message
+        self.loop = loop
+
 
 class Menu():
     def __init__(self, bot):
         self.bot = bot
 
-        # Feel free to override this in your cog if you need to
-        self.emoji = {
-            0: "0⃣",
-            1: "1⃣",
-            2: "2⃣",
-            3: "3⃣",
-            4: "4⃣",
-            5: "5⃣",
-            6: "6⃣",
-            7: "7⃣",
-            8: "8⃣",
-            9: "9⃣",
-            10: "🔟",
-            "next": "➡",
-            "back": "⬅",
-            "yes": "✅",
-            "no": "❌"
-        }
-
     def perms(self, ctx):
         user = ctx.message.server.get_member(self.bot.user.id)
         return ctx.message.channel.permissions_for(user)
 
-    async def _add_reactions(self, message,
+    async def _add_reactions(self,
                              choices: list,
-                             page, emoji,
-                             loop=False):
+                             info: menu_info):
         pages = [choices[x:x + 10] for x in range(0, len(choices), 10)]
-        if page > len(pages):
-            page = 0
-        if page:
-            await self.bot.add_reaction(message, str(emoji['back']))
-        for idx, i in enumerate(pages[page], 1):
-            await self.bot.add_reaction(message, str(emoji[idx]))
+        _emoji = info.emoji
+        if info.page > len(pages):
+            info.page = 0
+        if info.page:
+            await self.bot.add_reaction(info.message, str(_emoji['back']))
+        for idx, i in enumerate(pages[info.page], 1):
+            await self.bot.add_reaction(info.message, str(_emoji[idx]))
 
-        is_last = (page < len(pages) - 1)
-        if not is_last or (is_last and loop):
-            await self.bot.add_reaction(message, str(emoji['next']))
+        is_last = (info.page == len(pages) - 1)
+        if not is_last or (is_last and info.loop):
+            await self.bot.add_reaction(info.message, str(_emoji['next']))
         return
 
     async def menu(self, ctx,
                    _type: int,
                    messages,
                    choices: int = 1,
-                   **kwargs):
+                   info: menu_info = None):
         """Creates and manages a new menu
 
         Required arguments:
@@ -92,19 +110,18 @@ class Menu():
             loop (Defaults to False):
                 Whether or not the pages loop to the first page at the end"""
         result = None
+        if info is None:
+            info = menu_info()
         if _type == 1:
-            result = await self._number_menu(ctx, messages, choices, **kwargs)
+            result = await self._number_menu(ctx, messages, choices, info)
         if _type == 2:
-            result = await self._confirm_menu(ctx, messages, **kwargs)
+            result = await self._confirm_menu(ctx, messages, info)
         if _type == 3:
-            result = await self._info_menu(ctx, messages, **kwargs)
+            result = await self._info_menu(ctx, messages, info)
 
         return result
 
-    async def show_menu(self,
-                        ctx,
-                        message,
-                        messages):
+    async def show_menu(self, ctx, message, messages):
         if message:
             if type(messages) == discord.Embed:
                 await self.bot.edit_message(message, embed=messages)
@@ -117,65 +134,54 @@ class Menu():
             else:
                 return await self.bot.say(messages)
 
-    async def _number_menu(self, ctx, messages, choices, **kwargs):
-        page = kwargs.get('page', 0)
-        timeout = kwargs.get('timeout', 15)
-        check = kwargs.get('check', default_check)
-        is_open = kwargs.get('is_open', False)
-        emoji = kwargs.get('emoji', self.emoji)
-        message = kwargs.get('message', None)
-        loop = kwargs.get('loop', False)
+    async def _number_menu(self, ctx, messages, choices, info: menu_info):
+        info.message = await self.show_menu(ctx, info.message, messages)
 
-        message = await self.show_menu(ctx, message, messages)
-
-        await self._add_reactions(message, choices, page, emoji, loop)
+        await self._add_reactions(choices, info)
 
         r = await self.bot.wait_for_reaction(
-            emoji=list(emoji.values()),
-            message=message,
+            emoji=list(info.emoji.values()),
+            message=info.message,
             user=ctx.message.author,
-            check=check,
-            timeout=timeout)
+            check=info.check,
+            timeout=info.timeout)
         if r is None:
             return None
 
-        reacts = {v: k for k, v in emoji.items()}
+        reacts = {v: k for k, v in info.emoji.items()}
         react = reacts[r.reaction.emoji]
 
         if react == "next":
-            page += 1
+            info.page += 1
         elif react == "back":
-            page -= 1
+            info.page -= 1
         else:
             return react
 
         try:
-            await self.bot.remove_reaction(message, emoji[react], r.user)
+            await self.bot.remove_reaction(info.message,
+                                           info.emoji[react], r.user)
         except discord.Forbidden:
-            await self.bot.delete_message(message)
-            message = None
+            await self.bot.delete_message(info.message)
+            info.message = None
 
         return await self._number_menu(
-            ctx, message,
-            choices, **kwargs)
+            ctx, messages,
+            choices, info)
 
-    async def _confirm_menu(self, ctx, message, **kwargs):
-        timeout = kwargs.get('timeout', 15)
-        check = kwargs.get('check', default_check)
-        emoji = kwargs.get('emoji', self.emoji)
-
-        await self.bot.add_reaction(message, str(emoji['yes']))
-        await self.bot.add_reaction(message, str(emoji['no']))
+    async def _confirm_menu(self, ctx, info: menu_info):
+        await self.bot.add_reaction(info.message, str(info.emoji['yes']))
+        await self.bot.add_reaction(info.message, str(info.emoji['no']))
 
         r = await self.bot.wait_for_reaction(
-            message=message,
-            check=check,
+            message=info.message,
+            check=info.check,
             user=ctx.message.author,
-            timeout=timeout)
+            timeout=info.timeout)
         if r is None:
             return None
 
-        reacts = {v: k for k, v in emoji.items()}
+        reacts = {v: k for k, v in info.emoji.items()}
         react = reacts[r.reaction.emoji]
 
         if react == "no":
@@ -183,54 +189,45 @@ class Menu():
         else:
             return True
 
-    async def _info_menu(self, ctx, messages, **kwargs):
-        page = kwargs.get("page", 0)
-        timeout = kwargs.get("timeout", 15)
-        is_open = kwargs.get("is_open", False)
-        check = kwargs.get("check", default_check)
-        emoji = kwargs.get("emoji", self.emoji)
-        message = kwargs.get("message", None)
+    async def _info_menu(self, ctx, messages, info: menu_info):
         choices = len(messages)
 
-        await self.show_menu(ctx, message, messages)
+        await self.show_menu(ctx, info.message, messages)
 
-        await self.bot.add_reaction(message, str(emoji['back']))
-        await self.bot.add_reaction(message, str(emoji['no']))
-        await self.bot.add_reaction(message, str(emoji['next']))
+        await self.bot.add_reaction(info.message, str(info.emoji['back']))
+        await self.bot.add_reaction(info.message, str(info.emoji['no']))
+        await self.bot.add_reaction(info.message, str(info.emoji['next']))
 
         r = await self.bot.wait_for_reaction(
-            message=message,
+            message=info.message,
             user=ctx.message.author,
-            check=default_check,
-            timeout=timeout)
+            check=info.check,
+            timeout=info.timeout)
         if r is None:
-            return [None, message]
+            return [None, info.message]
 
-        reacts = {v: k for k, v in emoji.items()}
+        reacts = {v: k for k, v in info.emoji.items()}
         react = reacts[r.reaction.emoji]
 
         if react == "next":
-            page += 1
+            info.page += 1
         if react == "back":
-            page -= 1
+            info.page -= 1
         if react == "no":
-            return ["no", message]
+            return ["no", info.message]
 
-        if page < 0:
-            page = choices - 1
+        if info.page < 0:
+            info.page = choices - 1
 
-        if page == choices:
-            page = 0
+        if info.page == choices:
+            info.page = 0
 
         if self.perms(ctx).manage_messages:
-            await self.bot.remove_reaction(message, emoji[react], r.user)
+            await self.bot.remove_reaction(info.message,
+                                           info.emoji[react], r.user)
         else:
-            await self.bot.delete_message(message)
-            message = None
+            await self.bot.delete_message(info.message)
+            info.message = None
 
         return await self._info_menu(
-            ctx, messages,
-            page=page,
-            timeout=timeout,
-            check=check, is_open=is_open,
-            emoji=emoji, message=message)
+            ctx, messages, info)
