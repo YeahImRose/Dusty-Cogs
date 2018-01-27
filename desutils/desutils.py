@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
 from .utils.dataIO import dataIO
+from .utils.menu import *
 from __main__ import send_cmd_help, settings
 from cogs.utils import checks
+from random import choice
 import os
 import aiohttp
-import asyncio
 
 # weird because 0 indexing
 numbs = {
@@ -25,6 +26,7 @@ numbs = {
 class Desutils:
     def __init__(self, bot):
         self.bot = bot
+        self.menu = Menu(bot)
 
     def _perms(self, ctx, perm):
         if ctx.message.author.id == settings.owner:
@@ -35,29 +37,52 @@ class Desutils:
         resolved = ch.permissions_for(author)
         return resolved.perm
 
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def botinfo(self, ctx):
+        _colour = ''.join([choice('0123456789ABCDEF') for x in range(6)])
+        _colour = int(_colour, 16)
+        _creation_date = self.bot.user.created_at.strftime("%d %b %Y %H:%M")
+        _usercount = len([x.bot for x in self.bot.get_all_members()])
+        _servercount = len(self.bot.servers)
+        _name = "{}#{}".format(self.bot.user.name,
+                               self.bot.user.discriminator)
+
+        e = discord.Embed(description="Bot statistics", colour=_colour)
+        e.set_author(name=_name, icon_url=self.bot.user.avatar_url)
+        e.add_field(name="User count", value=_usercount)
+        e.add_field(name="Server count", value=_servercount)
+        e.set_footer(text="Bot created on {}".format(_creation_date))
+
+        try:
+            await self.bot.say(embed=e)
+        except discord.Forbidden:
+            await self.bot.say("I don\'t have permission to send embeds here!")
+
     async def _prompt(self, ctx, msg: str):
         await self.bot.say(msg)
-        msg = await self.bot.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
+        msg = await self.bot.wait_for_message(author=ctx.message.author,
+                                              channel=ctx.message.channel)
         return msg
 
     @commands.command(pass_context=True, no_pm=True)
     async def utilsmenu(self, ctx):
-        menu = self.bot.get_cog("Menu")
         cmds = ["Roles", "Send cog", "List cogs", "Perms"]
+        cmd = ""
+        cmd_msg = "Roles\nSend cog\nList cogs\nPerms"
 
-        result = await menu.number_menu(ctx, "Desutils selection menu", cmds, autodelete=True)
-        cmd = cmds[result-1]
+        cmd = await self.menu.menu(ctx, 1, cmd_msg, cmds)
 
-        if cmd == "Roles" and self._perms(ctx, 'manage_roles'):
+        if cmd == 1 and self._perms(ctx, 'manage_roles'):
             return await ctx.invoke(self.roles)
 
-        if cmd == "Send cog" and self._perms(ctx, 'manage_roles'):
+        if cmd == 2 and self._perms(ctx, 'manage_roles'):
             return await ctx.invoke(self.sendcog)
 
-        if cmd == "List cogs" and self._perms(ctx, 'manage_messages'):
+        if cmd == 3 and self._perms(ctx, 'manage_messages'):
             return await ctx.invoke(self.listcogs)
 
-        if cmd == "Perms" and self._perms(ctx, 'manage_roles'):
+        if cmd == 4 and self._perms(ctx, 'manage_roles'):
             return await ctx.invoke(self.perms)
 
         if cmd is None:
@@ -73,9 +98,13 @@ class Desutils:
 
     @checks.is_owner()
     @commands.command(pass_context=True, no_pm=True)
-    async def sendcog(self, ctx):
-        fp = await self._prompt(ctx, "What cog do you want to send?")
-        fp = "cogs/{0}.py".format(fp.content)
+    async def sendcog(self, ctx, cog=""):
+        fp = ""
+        if cog == "":
+            fp = await self._prompt(ctx, "What cog do you want to send?")
+            fp = "cogs/{0}.py".format(fp.content)
+        else:
+            fp = "cogs/{0}.py".format(cog)
         if os.path.exists(fp):
             await self.bot.send_file(ctx.message.channel, fp)
         else:
@@ -122,12 +151,6 @@ class Desutils:
             elif text and x.content.startswith(text):
                 return await self.bot.unpin_message(x)
 
-    async def prefixes(self, message):
-        if message.content == "prefixes":
-            prefix_list = [x for x in self.bot.command_prefix]
-            msg = "```{0}```".format(', '.join(prefix_list))
-            await self.bot.send_message(message.channel, msg)
-
     @checks.is_owner()
     @commands.command(pass_context=True, no_pm=True)
     async def listcogs(self, ctx):
@@ -138,7 +161,7 @@ class Desutils:
         ? means the cog couldn't be found(it was probably removed manually)"""
 
         all_cogs = dataIO.load_json("data/red/cogs.json")
-        loaded, unloaded, other = ("",)*3
+        loaded, unloaded, other = ("",) * 3
         cogs = self.bot.cogs['Owner']._list_cogs()
 
         for x in all_cogs:
@@ -177,5 +200,4 @@ class Desutils:
 
 def setup(bot):
     n = Desutils(bot)
-    bot.add_listener(n.prefixes, 'on_message')
     bot.add_cog(n)
