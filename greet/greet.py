@@ -184,7 +184,6 @@ class Greet:
         audio = self.bot.get_cog('Audio')
         # channel = after.voice_channel
         server = after.server
-        # bot_chan = self.bot.voice_client_in(server)
         if server.id not in self.settings.keys():
             return
         if not self.settings[server.id]["ENABLED"]:
@@ -200,6 +199,11 @@ class Greet:
         if not self.settings[server.id][after.id][0]:
             return
         if audio.is_playing(server):
+            return
+        #bot_channel = self.bot.voice_client_in(server)
+        #if bot_channel != after.voice_channel:
+        #    if bot_channel is not None:
+        if after is None:
             return
         try:
             #    await audio._stop_and_disconnect(server)
