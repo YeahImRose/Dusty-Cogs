@@ -188,7 +188,7 @@ class Greet:
             return
         if not self.settings[server.id]["ENABLED"]:
             return
-        if after.voice is None:
+        if after.voice.voice_channel is None:
             return
         #if before.voice_channel == after.voice_channel:
         #    return
