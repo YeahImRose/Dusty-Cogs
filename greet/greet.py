@@ -188,7 +188,7 @@ class Greet:
             return
         if not self.settings[server.id]["ENABLED"]:
             return
-        if after is None:
+        if after.voice is None:
             return
         #if before.voice_channel == after.voice_channel:
         #    return
@@ -203,8 +203,6 @@ class Greet:
         #bot_channel = self.bot.voice_client_in(server)
         #if bot_channel != after.voice_channel:
         #    if bot_channel is not None:
-        if after is None:
-            return
         try:
             #    await audio._stop_and_disconnect(server)
             #    await self._join_voice_channel(channel)
