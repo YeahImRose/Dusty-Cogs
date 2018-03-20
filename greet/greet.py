@@ -192,8 +192,6 @@ class Greet:
             return
         if before.voice.voice_channel == after.voice.voice_channel:
             return
-        if after.voice.voice_channel != self.bot.voice_client_in(server):
-            return
         #if before.voice_channel == after.voice_channel:
         #    return
         if after.id == self.bot.user.id:
