@@ -53,7 +53,7 @@ The bot will not play the join sound if the bot is playing music. Also, the owne
 
 Usage:
 - `[p]greetset sound "the-sound.extension"` sets the sound that plays when you join the voice channel.
-- `[p]greetset toggle server/user user-mention-if-needed` will toggle whether or not the bot will play a greeting sound for the server/a user.
+- `[p]greetset toggle server/user (user mention if needed)` will toggle whether or not the bot will play a greeting sound for the server/a user.
 - `[p]greetset` displays help for greet commands.
 
 ## Contacting me
