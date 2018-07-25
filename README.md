@@ -1,6 +1,9 @@
 # Dusty-Cogs
 Various cogs for utility/fun
 
+# V3 Rewrite in progress
+As of July 25, 2018
+
 ## Installing cogs 
 To use my cogs, you need to first add my repo:
 
@@ -57,6 +60,6 @@ Usage:
 - `[p]greetset` displays help for greet commands.
 
 ## Contacting me
-If you want to contact me, my Discord name is Awoonar Dust#0233
+If you want to contact me, my Discord name is Awoonar Dust#6633
 
 If you need to contact me but can't contact me through Discord for various reasons, my email is on my github profile.
