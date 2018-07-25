@@ -13,14 +13,16 @@ class Moji:
     def __init__(self, bot):
         self.bot = bot
         self.size = 128, 128
+        self.bot.loop.create_task(self.init_task())
 
     def update_folders(self):
-        for x in list(self.bot.get_all_servers()):
-            if os.path.exists("data/moji/" + x.server.name):
-                os.rename("data/moji/" + x.server.name,
-                          "data/moji/" + x.server.id)
+        for x in self.bot.servers:
+            if os.path.exists("data/moji/" + x.name):
+                os.rename("data/moji/" + x.name,
+                          "data/moji/" + x.id)
 
-    async def on_ready(self):
+    async def init_task(self):
+        await self.bot.wait_until_ready()
         self.update_folders()
 
     @commands.command(pass_context=True, no_pm=True)
@@ -46,8 +48,8 @@ class Moji:
                 im.thumbnail(self.size, Image.ANTIALIAS)
                 im.save(fp, "PNG")
 
-# You can uncomment this line if you want c:
-                #await self.bot.delete_message(ctx.message)
+                # You can uncomment this line if you want c:
+                # await self.bot.delete_message(ctx.message)
                 return await self.bot.send_file(ctx.message.channel, fp)
 
     @commands.group(pass_context=True, no_pm=True)
