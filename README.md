@@ -63,3 +63,5 @@ Usage:
 If you want to contact me, my Discord name is Awoonar Dust#1273
 
 If you need to contact me but can't contact me through Discord for various reasons, my email is on my github profile.
+
+My support server: https://discord.gg/VsNYqDK
