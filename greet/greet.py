@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
-from .utils.dataIO import dataIO
-from .utils import checks
+from redbot.core.utils.dataIO import dataIO
+from redbot.core.utils import checks
 from __main__ import send_cmd_help
 from pathlib import Path
 import os
