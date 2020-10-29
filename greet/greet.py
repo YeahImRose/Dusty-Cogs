@@ -1,6 +1,6 @@
 import discord
-from discord.ext import commands
-from redbot.core.utils.dataIO import dataIO
+from redbot.core import Config
+from redbot.core import commands
 from redbot.core.utils import checks
 from __main__ import send_cmd_help
 from pathlib import Path
@@ -34,8 +34,7 @@ class Greet:
 
     def __init__(self, bot, player):
         self.bot = bot
-        self.file_path = "data/greet/settings.json"
-        self.settings = dataIO.load_json(self.file_path)
+        self.settings = Config.get_conf(self, identifier=5621656510)
         self.player = player
 
     def voice_client(self, server):
@@ -216,22 +215,6 @@ class Greet:
         except Exception as e:
             print("Something went very wrong...\n{}".format(e))
 
-
-def check_folders():
-    if not os.path.exists("data/greet"):
-        print("Creating data/greet folder...")
-        os.makedirs("data/greet")
-
-    if not os.path.exists("data/greet/sounds"):
-        print("Creating data/greet/sounds folder...")
-        os.makedirs("data/greet/sounds")
-
-
-def check_files():
-    f = "data/greet/settings.json"
-    if not dataIO.is_valid_json(f):
-        print("Creating welcome settings.json...")
-        dataIO.save_json(f, {})
 
 
 def check_avconv_ffmpeg():
