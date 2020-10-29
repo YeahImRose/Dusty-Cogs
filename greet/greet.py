@@ -249,12 +249,3 @@ def check_avconv_ffmpeg():
     else:
         return "avconv"
 
-
-def setup(bot):
-    if youtube_dl is None:
-        print("Sorry, you need youtube_dl to use the Greet cog")
-        print("Please run 'pip3 install youtube_dl'")
-    check_folders()
-    check_files()
-    n = Greet(bot, check_avconv_ffmpeg())
-    bot.add_cog(n)

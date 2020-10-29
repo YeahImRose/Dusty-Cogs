@@ -1,6 +1,6 @@
 {
-	"AUTHOR" : "Lunar Dust",
-	"INSTALL_MSG" : "Thank you for downloading one of my cogs! If you have any issues please let me know!",
+	"AUTHOR" : "Lunar Dust forked by DeungDeung",
+	"INSTALL_MSG" : "Thank you for downloading one of my cogs! ",
 	"NAME" : "greet",
 	"SHORT" : "Plays a sound effect when a user joins a voice channel.",
 	"DESCRIPTION" : "Plays a sound effect when a user joins a voice channel. Different sound effects can be chosen for different users. Currently the bot owner must manually add audio files to data/greet/sounds for it to work.\nThanks to Will(tekulvw) for the audio file playing :)",
